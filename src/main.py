@@ -67,7 +67,15 @@ def get_notion_tasks():
         "Notion-Version": "2022-06-28",
         "Authorization": "Bearer " + NOTION_API_KEY
     }
-    res = requests.post(url, headers=headers)
+    payload = {
+        "filter": {
+            "property": "Done",
+            "checkbox": {
+                "equals": False
+            }
+        }
+    }
+    res = requests.post(url, headers=headers, json=payload)
     res = res.json()
     task_ids, task_names, parent_project_names = (
         [result["id"] for result in res["results"]],
@@ -90,18 +98,44 @@ def add_clockify_new_project(project_name):
         "public": False
     }
     res = requests.post(url, headers=headers, json=json_data)
+    
+def add_clockify_new_task(project_id, task_name):
+    """
+    Clockifyの新しいTaskを作成する
+    """
+    url = f"https://api.clockify.me/api/v1/workspaces/{CLOCKIFY_WORKSPACE_ID}/projects/{project_id}/tasks"
+    headers = {
+        "x-api-key": CLOCKIFY_API_KEY
+    }
+    json_data = {
+        "name": task_name,
+        "statusEnum": "ACTIVE"
+    }
+    res = requests.post(url, headers=headers, json=json_data)
 
 def main():
     # Clockifyについて既存のProjectとTaskを取得
     clockify_project_ids, clockify_project_names = get_clockify_projects()
     clockify_task_ids, clockify_task_names = get_clockify_tasks(clockify_project_ids)
+    clockify_project_dic = {name: id for name, id in zip(clockify_project_names, clockify_project_ids)}
     
     # Notionについて既存のProjectとTaskを取得
     notion_project_ids, notion_project_names = get_notion_projects()
+    notion_project_dic = {id: name for id, name in zip(notion_project_ids, notion_project_names)}
     notion_task_ids, notion_task_names, notion_parent_project_ids = get_notion_tasks()
+    
+    # 新しいProjectをClockifyにも作成
     for notion_project_name in notion_project_names:
         if notion_project_name not in clockify_project_names:
             add_clockify_new_project(notion_project_name)
+    
+    # 新しいTaskをClockifyにも作成
+    for notion_task_name, notion_project_id in zip(notion_task_names, notion_parent_project_ids):
+        if notion_task_name not in clockify_task_names:
+            notion_project_name = notion_project_dic[notion_project_id]
+            clockify_project_id = clockify_project_dic[notion_project_name]
+            add_clockify_new_task(clockify_project_id, notion_task_name)
+            break
 
 if __name__ == "__main__":
     main()
