@@ -1,2 +1,3 @@
 .env
 .venv
+connect_notion_with_clockify.sh

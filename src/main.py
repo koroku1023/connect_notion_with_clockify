@@ -138,7 +138,6 @@ def main():
             notion_project_name = notion_project_dic[notion_project_id]
             clockify_project_id = clockify_project_dic[notion_project_name]
             add_clockify_new_task(clockify_project_id, notion_task_name)
-            break
 
 if __name__ == "__main__":
     main()
