@@ -28,6 +28,8 @@ def get_clockify_tasks(project_ids):
     """
     ClockifyのTask名を取得する
     """
+    task_ids = []
+    task_names = []
     for project_id in project_ids:
         url = f"https://api.clockify.me/api/v1/workspaces/{CLOCKIFY_WORKSPACE_ID}/projects/{project_id}/tasks"
         headers = {
@@ -35,7 +37,8 @@ def get_clockify_tasks(project_ids):
         }
         res = requests.get(url, headers=headers)
         res = res.json()
-        task_ids, task_names = [v["id"] for v in res], [v["name"] for v in res]
+        task_ids += [v["id"] for v in res]
+        task_names += [v["name"] for v in res]
         time.sleep(1)
     return task_ids, task_names
 
